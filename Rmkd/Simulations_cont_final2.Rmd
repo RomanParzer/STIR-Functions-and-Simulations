@@ -1,0 +1,1784 @@
+---
+title: "Summary of Simulations"
+subtitle: "for Sufficient Dimension Reduction for Longitudinal Data"
+author: "Roman Parzer - 01604879"
+date: "`r format(Sys.time(), '%d.%m.%Y')`"
+output: 
+  pdf_document:
+    keep_tex: true
+header-includes:
+  - \usepackage{multirow}
+  - \usepackage{natbib}
+  - \usepackage{verbatim}
+  - \newcommand{\N}{\mathbb{N}}
+  - \newcommand{\real}{\mathbb{R}}
+  - \newcommand{\Sb}{{\mathbf S}}
+  - \newcommand{\E}{\mathbb{E}}
+  - \newcommand{\I}{\mathbb{I}}
+  - \renewcommand{\P}{\mathbb{P}}
+  - \newcommand{\Y}{{\mathbf Y}}
+  - \newcommand{\G}{{\mathbf G}}
+  - \newcommand{\greekbold}[1]{\mbox{\boldmath $#1$}}
+  - \newcommand{\Sigmabf}{\greekbold{\Sigma}}
+  - \newcommand{\Deltabf}{\greekbold{\Delta}}
+  - \newcommand{\Gbb}{\mathbb{G}}
+  - \usepackage{float}
+  - \usepackage{graphics}
+#  - \usepackage{xcolor}
+  - \floatplacement{figure}{ht}
+  - \DeclareMathOperator{\Cov}{Cov}  
+  - \DeclareMathOperator{\Var}{Var} 
+  - \DeclareMathOperator{\argmax}{argmax} 
+  - \DeclareMathOperator{\argmin}{argmin} 
+  - \usepackage{booktabs}
+  - \newcommand{\B}{{\mathbf B}}
+  - \newcommand{\rank}{\operatorname{rank}}
+  - \newcommand{\spn}{\operatorname{span}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(comment = NA)
+require(knitr) # for kable
+require(kableExtra)
+require(dplyr)
+options(knitr.kable.NA = '')
+```
+
+
+```{r wrMat}
+write_matex <- function(B,B_sd=NULL,digits=3) {
+  B <- as.matrix(B)
+  begin <- "\\begin{pmatrix}"
+  end <- "\\end{pmatrix}"
+  if (is.null(B_sd)) {
+    X <-
+    apply(round(B,digits), 1, function(x) {
+      paste(
+        paste(x, collapse = "&"),
+        "\\\\"
+      )
+    })
+  } else {
+    B_sd <- as.matrix(B_sd)
+    X <-
+    apply(matrix(paste(paste(round(B,digits),round(B_sd,digits),sep="("),")",sep=""),nrow(B),ncol(B)),
+          1, function(x) {
+      paste(
+        paste(x, collapse = "&"),
+        "\\\\"
+      )
+    })
+  }
+  paste(c(begin, X, end), collapse = "")
+}
+
+```
+
+
+
+## Simulations for continuous $Y$
+
+In the continuous-\(Y\) setting we draw \(Y\) from a \(N(0,0.1)\) and
+use the Fourier-basis for \({\mathbf G}({\mathbf Y})\), where the
+\(i-\)th row is given by \[
+{\mathbf G}({\mathbf Y})_{i.} = (\cos(2\pi y_i),\sin(2\pi y_i),\cos(2\pi 2y_i),\sin(2\pi 2y_i),\cos(2\pi 3y_i),\dots) \in \mathbb{R}^{1\times H}, \text{ with } y_i \overset{iid}{\sim}N(0,0.1),
+\] and then center the columns of \({\mathbf G}({\mathbf Y})\). For LSIR
+we use the same for \(\mathbb{G}\), only with \(r\cdot m\)
+columns. For fitting LSIR we use a discrete version of \(y_i\) split
+into \(10\) classes. 
+All considered scenarios are given in Table \ref{tab:settings_contY}. We use both a normal error with
+covariance \(\Delta(y_i)=\exp(-\min(\sqrt 10|y_i|,2))\cdot AR^1_{Tp}(0.8)\) and also just a fixed covariance \(\Delta= AR^1_{Tp}(0.8)\).
+
+In scenarios 1 - 4 we use the time points `exp(1:t/6)/exp(t/6)`. In scenarios 5 - 7  we draw time points $t_k^{i} \sim unif(0,1), k=1,\dots,T$ for each observation and we set $\Sb_i \in \real^{d\times T}$ as in the binary case.
+
+For predicting the responses we again we compare our proposed method, our method using \(\hat \Delta = \hat \Delta_p \otimes \hat \Delta_T\) instead of \(\hat \Sigma_x\) in \eqref{colredest}, LSIR, and as baseline the unreduced data. We fit both linear model
+\eqref{mod.lm} on the vectorized reduced predictors, predict responses for new reduced data and measure the correlation to the true new response. The results are given in Tables \ref{tab:sim_Y_cont_1234} and \ref{tab:Y_cont_5678}. GAM REML smoothness estimation (penalized) (only the dimension of the basis 3, "cr" for cubic regression spline as smoothing base)
+
+
+
+```{r setup_comms,include=FALSE}
+
+# \resizebox*{!}{0.95\textheight}{%
+# \begin{tabular}[t]{lllll}
+# %
+# }
+
+# sim1 <- readRDS("../results/simulation_contSDR_100_500_27_15_3_5_4_0.80_3_exp_Noquadeff_final_gamextra.rds")
+# sim1$y_cor_mean
+```
+
+## Final settings and Sigma-Results
+
+\begin{table}[ht]
+\centering
+\caption{   Simulation scenarios   for $y_i \sim N(0,0.1), i=1,\ldots,500$.  Results are means over $100$ replications for each setting. For all settings $rank(\B)=2$. $^*$ separate time points were generated   for each observation in the sample.}
+\vspace{0.1in}
+\label{tab:settings_contY_final}
+\resizebox{\columnwidth}{!}{
+ \begin{tabular}{l|l l l l l}
+ \toprule
+ Setting & Data generation & True $B$ & Error dist. & Timepoints $t$ & (T, p, H, d) \\ \hline
+ \addlinespace[0.3em]
+ STIR-1&  model \eqref{modTxp} & $\B= \begin{pmatrix}1&0.7&0.1\\0.5&0.3&0.1\\1&0.7&0.1\\0.5&0.3&0.1\end{pmatrix}$ & (a) $N(0,\Delta_y)$  (b) $N(0,\Delta)   $& $\exp(t/6-T/6)$   & (10, 3, 2, 2)\\
+ STIR-2 & model \eqref{modTxp} & $\B= \begin{pmatrix}1&0.7&0.1\\0.5&0.3&0.1\\1&0.7&0.1\\0.5&0.3&0.1\end{pmatrix}$  & (a) $N(0,\Delta_y)$  (b) $N(0,\Delta)     $ & ind.$^*$, runif(0,1)& (10, 3, 2, 2)\\
+   STIR-3 & model \eqref{modTxp} & $\B=\begin{pmatrix}1&0.7&0.1&1&0.7&\cdots&0.1\\0.5&0.3&0.1&0.5&0.3&\cdots&0.1\\ 1&0.7&0.1&1&0.7&\cdots&0.1\end{pmatrix} \in \mathbb{R}^{3\times15}$&   (a)   $N(0,\Delta_y)$   (b)  $N(0,\Delta)  $ & $\exp(t/6-T/6)$  & (3, 15, 3, 1)\\
+    STIR-4 & model \eqref{modTxp} & ${\mathbf B}=B_4=\begin{pmatrix}2&0&1&0&1&0&2\\0&0.5&1&0.5&1&0.5 &0\end{pmatrix}$&   (a)   $N(0,\Delta_y)$   (b)  $N(0,\Delta)  $ & $ t/T$  & (2, 7, 2, 1)\\
+  STIR-5 & model \eqref{modTxp} & ${\mathbf B}=\begin{pmatrix}B_4 & B_4 & B_4\end{pmatrix}$&   (a)   $N(0,\Delta_y)$   (b)  $N(0,\Delta)  $ & $ t/T$  & (2, 21, 2, 1)\\
+  STIR-6 & model \eqref{modTxp} & ${\mathbf B}=3B_4=3\begin{pmatrix}2&0&1&0&1&0&2\\0&0.5&1&0.5&1&0.5 &0\end{pmatrix}$&   (a)   $N(0,\Delta_y)$   (b)  $N(0,\Delta)  $ & $ t/T$  & (2, 7, 2, 1)\\
+   LSIR-1 & model  \eqref{modLSIR} & $\psi= \begin{pmatrix} 1\\0\\1 \end{pmatrix}, \phi=\begin{pmatrix} 0.1&1\\-0.05&-1\\\vdots&\vdots\\0.1&1\\-0.05&-1\end{pmatrix} \in \real^{8 \times 2}$& (a)   $N(0,\Delta_y)$   (b)  $N(0,\Delta)  $  & $\exp(t/6-T/6)$  & (3, 8,  3, 2)\\
+   LSIR-2  &model  \eqref{modLSIR} & $\psi= \begin{pmatrix} 1\\0\\1 \end{pmatrix}, \phi=\begin{pmatrix} 0.1&1\\-0.05&-1\\\vdots&\vdots\\0.1&1\\-0.05&-1\end{pmatrix} \in \real^{8 \times 2}$&(a)   $N(0,\Delta_y)$   (b)  $N(0,\Delta)  $ & ind.$^*$,runif(0,1)  & (3, 8, 3, 2)\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+```{r cont1to4}
+## STIR delta ml, STIR kron, STIR ML, LSIR, orig
+# gam and n=2000 for k=1, 
+### now cont settings 1- 4
+tab_bin <- tab_bin_sd <- matrix(c(0),54,5)
+
+#Sc1
+add <- 0
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+add <- 1
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+tab_bin[6+add,4] <- sim1$y_cor_mean[c(19),1]
+tab_bin_sd[6+add,4] <- sim1$y_cor_sd[c(19),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 7
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+add <- 8
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+tab_bin[6+add,4] <- sim1$y_cor_mean[c(19),1]
+tab_bin_sd[6+add,4] <- sim1$y_cor_sd[c(19),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+#Sc2
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+add <- 14
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+add <- 15
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+tab_bin[6+add,4] <- sim1$y_cor_mean[c(19),1]
+tab_bin_sd[6+add,4] <- sim1$y_cor_sd[c(19),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+add <- 21
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+add <- 22
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+tab_bin[6+add,4] <- sim1$y_cor_mean[c(19),1]
+tab_bin_sd[6+add,4] <- sim1$y_cor_sd[c(19),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+#Sc3
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 28
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+add <- 29
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+tab_bin[6+add,4] <- sim1$y_cor_mean[c(19),1]
+tab_bin_sd[6+add,4] <- sim1$y_cor_sd[c(19),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_22_3_15_3_1_0.80_1_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 35
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+add <- 36
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+tab_bin[6+add,4] <- sim1$y_cor_mean[c(19),1]
+tab_bin_sd[6+add,4] <- sim1$y_cor_sd[c(19),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_22_3_15_3_1_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+## sc 4
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 42
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+add <- 43
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+tab_bin[5+add,4] <- sim1$y_cor_mean[c(13),1]
+tab_bin_sd[5+add,4] <- sim1$y_cor_sd[c(13),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_10_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 48
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+add <- 49
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+tab_bin[5+add,4] <- sim1$y_cor_mean[c(13),1]
+tab_bin_sd[5+add,4] <- sim1$y_cor_sd[c(13),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_10_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),54,5)
+colnames(pred1) <- c("STIR","STIR","STIR ML","LSIR", "Unreduced" )
+rownames(pred1) <- c(rep(c("k=1=r=m","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2,r=3,m=1","k=3=r,m=2","r=7,m=2"),4),
+                     rep(c("k=1=r=m","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2,r=1,m=3","k=3,r=2,m=3","r=2,m=10"),2),
+                     rep(c("k=1=r=m","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2,r=1,m=3","r=2,m=4"),2))
+
+pred1[c(5:7,12:14,19:21,26:28,33:35,40:42,47:48,53:54),5] <- ""
+pred1[c(7,14,21,28,35,42,48,54),1:3] <- ""
+kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:sim_Y_cont_1234}Correlation between $100$ new continuous $Y$-observations and values predicted by linear model fit. Results are means over $100$ replications for each setting. Settings STIR 1-4.") %>%
+  kable_styling(latex_options = "hold_position")%>%
+  #add_header_above(c(" " = 1, "Proposed" = 2, "Prop. w. Kron." = 2,"LSIR" = 2, "Unreduced" = 2)) %>%
+  pack_rows("Scenario STIR-1 a $(T, p, H, d) = (10,3,2,2)$",1,7,escape=FALSE)%>%
+  pack_rows("Scenario STIR-1 b",8,14,escape=FALSE)%>%
+  pack_rows("Scenario STIR-2 a $(T, p, H, d) = (10,3,2,2)$",15,21,escape=FALSE)%>%
+  pack_rows("Scenario STIR-2 b",22,28,escape=FALSE)%>%
+  pack_rows("Scenario STIR-3 a $(T, p, H, d) = (3,15,3,1)$",29,35,escape=FALSE)%>%
+  pack_rows("Scenario STIR-3 b",36,42,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 a $(T, p, H, d) = (2,7,2,1)$",43,48,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 b",49,54,escape=FALSE)
+  
+```
+
+
+```{r cont5to8}
+## now cont scenarios 5 - 8
+tab_bin <- tab_bin_sd <- matrix(c(0),48,5)
+
+# Sc5
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 0
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+add <- 1
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+tab_bin[5+add,4] <- sim1$y_cor_mean[c(13),1]
+tab_bin_sd[5+add,4] <- sim1$y_cor_sd[c(13),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_21_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 6
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+add <- 7
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+tab_bin[5+add,4] <- sim1$y_cor_mean[c(13),1]
+tab_bin_sd[5+add,4] <- sim1$y_cor_sd[c(13),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_21_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+# 6
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 12
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+add <- 13
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+tab_bin[5+add,4] <- sim1$y_cor_mean[c(13),1]
+tab_bin_sd[5+add,4] <- sim1$y_cor_sd[c(13),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 18
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+add <- 19
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+tab_bin[5+add,4] <- sim1$y_cor_mean[c(13),1]
+tab_bin_sd[5+add,4] <- sim1$y_cor_sd[c(13),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+# lsir 1
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 24
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),2]
+add <- 25
+tab_bin[4+add,1:3] <- sim1$y_cor_mean[c(6:7,19),1]
+tab_bin_sd[4+add,1:3] <- sim1$y_cor_sd[c(6:7,19),1]
+tab_bin[5+add,1:3] <- sim1$y_cor_mean[c(11:12,20),1]
+tab_bin_sd[5+add,1:3] <- sim1$y_cor_sd[c(11:12,20),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 30
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),2]
+add <- 31
+tab_bin[4+add,1:3] <- sim1$y_cor_mean[c(6:7,19),1]
+tab_bin_sd[4+add,1:3] <- sim1$y_cor_sd[c(6:7,19),1]
+tab_bin[5+add,1:3] <- sim1$y_cor_mean[c(11:12,20),1]
+tab_bin_sd[5+add,1:3] <- sim1$y_cor_sd[c(11:12,20),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+# lsir 2
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+add <- 36
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),2]
+add <- 37
+tab_bin[4+add,1:3] <- sim1$y_cor_mean[c(6:7,19),1]
+tab_bin_sd[4+add,1:3] <- sim1$y_cor_sd[c(6:7,19),1]
+tab_bin[5+add,1:3] <- sim1$y_cor_mean[c(11:12,20),1]
+tab_bin_sd[5+add,1:3] <- sim1$y_cor_sd[c(11:12,20),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+add <- 42
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,18,16,17),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,18,16,17),2]
+add <- 43
+tab_bin[4+add,1:3] <- sim1$y_cor_mean[c(6:7,19),1]
+tab_bin_sd[4+add,1:3] <- sim1$y_cor_sd[c(6:7,19),1]
+tab_bin[5+add,1:3] <- sim1$y_cor_mean[c(11:12,20),1]
+tab_bin_sd[5+add,1:3] <- sim1$y_cor_sd[c(11:12,20),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,8,6,7),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,8,6,7),2]
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),48,5)
+colnames(pred1) <- c("STIR","STIR","STIR ML","LSIR", "Unreduced" )
+rownames(pred1) <- c(rep(c("k=1=r=m","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2,r=1,m=4","r=2,m=10"),2),
+                     rep(c("k=1=r=m","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2,r=1,m=3","r=2,m=4"),2),
+                     rep(c("k=1","same w. gam","k=1 w.2.ord.","same w. n=2000","k=2","k=3"),4))
+pred1[c(5:6,11:12,17:18,23,24,29,30,35,36,41,42,47,48),5] <- ""
+pred1[c(6,12,18,24),1:3] <- ""
+pred1[c(29,30,35,36,41,42,47,48),4] <- ""
+kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:Y_cont_5678}Correlation between $100$ new continuous $Y$-observations and values predicted by linear model fit. Results are means over $100$ replications for each setting. Settings STIR 5 - 6 and LSIR 1 - 2") %>%
+  kable_styling(latex_options = "hold_position")%>%
+  #add_header_above(c(" " = 1, "Proposed" = 2, "Prop. w. Kron." = 2,"LSIR" = 2, "Unreduced" = 2)) %>%
+  pack_rows("Scenario STIR-5 a $(T, p, H, d) = (2,21,2,1)$",1,6,escape=FALSE)%>%
+  pack_rows("Scenario STIR-5 b",7,12,escape=FALSE)%>%
+  pack_rows("Scenario STIR-6 a $(T, p, H, d) = (2,7,2,1)$",13,18,escape=FALSE)%>%
+  pack_rows("Scenario STIR-6 b",19,24,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-1 a $(T, p, H, d) = (3,8,3,2)$",25,30,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-1 b",31,36,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 a $(T, p, H, d) = (3,8,3,2)$",37,42,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 b",43,48,escape=FALSE)
+```
+
+### Sigma
+
+```{r cont1to4 sig}
+## STIR delta kronecker, sigma kornecker, no scale
+## n=2000 for k=1
+### now cont settings 1- 4
+tab_bin <- tab_bin_sd <- matrix(c(0),46,5)
+
+#Sc1
+add <- 0
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 1
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 6
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 7
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+#Sc2
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+add <- 12
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 13
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+add <- 18
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 19
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_5_10_3_2_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+#Sc3
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 24
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 25
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_22_3_15_3_1_0.80_1_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 30
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 31
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_22_3_15_3_1_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+## sc 4
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 36
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 37
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_10_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 41
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 42
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_10_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),46,5)
+colnames(pred1) <- c("STIR","STIR Kron","STIR Sig","STIR Sig kron", "Unscaled" )
+rownames(pred1) <- c(rep(c("k=1","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2","k=3"),4),
+                     rep(c("k=1","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2","k=3"),2),
+                     rep(c("k=1","same w. gam","k=1=r=m w.2.ord.","same w. n=2000","k=2"),2))
+
+kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:sim_Y_cont_1234_sig}Correlation between $100$ new continuous $Y$-observations and values predicted by linear model fit. Results are means over $100$ replications for each setting. Settings STIR 1-4. SIGMA") %>%
+  kable_styling(latex_options = "hold_position")%>%
+  #add_header_above(c(" " = 1, "Proposed" = 2, "Prop. w. Kron." = 2,"LSIR" = 2, "Unreduced" = 2)) %>%
+  pack_rows("Scenario STIR-1 a $(T, p, H, d) = (10,3,2,2)$",1,6,escape=FALSE)%>%
+  pack_rows("Scenario STIR-1 b",7,12,escape=FALSE)%>%
+  pack_rows("Scenario STIR-2 a $(T, p, H, d) = (10,3,2,2)$",13,18,escape=FALSE)%>%
+  pack_rows("Scenario STIR-2 b",19,24,escape=FALSE)%>%
+  pack_rows("Scenario STIR-3 a $(T, p, H, d) = (3,15,3,1)$",25,30,escape=FALSE)%>%
+  pack_rows("Scenario STIR-3 b",31,36,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 a $(T, p, H, d) = (2,7,2,1)$",37,41,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 b",42,46,escape=FALSE)
+  
+```
+
+
+```{r cont5to8 sig}
+## now cont scenarios 5 - 8
+## now cont scenarios 5 - 8
+tab_bin <- tab_bin_sd <- matrix(c(0),44,5)
+
+# Sc5
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 0
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 1
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_21_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 5
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 6
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_21_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+# 6
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 10
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 11
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 15
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 16
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+sim1 <- readRDS("../results/simulation_contSTIR_100_2000_28_2_7_2_1_0.80_1_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+# lsir 1
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 20
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 21
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 26
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 27
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+# lsir 2
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+add <- 32
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 33
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+add <- 38
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:5),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:5),1]
+tab_bin[2+add,] <- sim1$y_cor_mean[c(1:5),3]
+tab_bin_sd[2+add,] <- sim1$y_cor_sd[c(1:5),3]
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+add <- 39
+tab_bin[4+add,] <- sim1$y_cor_mean[c(6:10),1]
+tab_bin_sd[4+add,] <- sim1$y_cor_sd[c(6:10),1]
+tab_bin[5+add,] <- sim1$y_cor_mean[c(11:15),1]
+tab_bin_sd[5+add,] <- sim1$y_cor_sd[c(11:15),1]
+sim1 <- readRDS("../results/simulation_contLSIR_100_2000_11_3_8_3_2_0.80_1_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:5),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:5),2]
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),44,5)
+colnames(pred1) <- c("STIR","STIR","STIR ML","LSIR", "Unscaled" )
+rownames(pred1) <- c(rep(c("k=1","same w. gam","k=1 w.2.ord.","same w. n=2000","k=2"),2),
+                     rep(c("k=1","same w. gam","k=1 w.2.ord.","same w. n=2000","k=2"),2),
+                     rep(c("k=1","same w. gam","k=1 w.2.ord.","same w. n=2000","k=2","k=3"),4))
+
+kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:Y_cont_5678_sig}Correlation between $100$ new continuous $Y$-observations and values predicted by linear model fit. Results are means over $100$ replications for each setting. Settings STIR 5 - 6 and LSIR 1 - 2 SIGMA") %>%
+  kable_styling(latex_options = "hold_position")%>%
+  #add_header_above(c(" " = 1, "Proposed" = 2, "Prop. w. Kron." = 2,"LSIR" = 2, "Unreduced" = 2)) %>%
+  pack_rows("Scenario STIR-5 a $(T, p, H, d) = (2,21,2,1)$",1,5,escape=FALSE)%>%
+  pack_rows("Scenario STIR-5 b",6,10,escape=FALSE)%>%
+  pack_rows("Scenario STIR-6 a $(T, p, H, d) = (2,7,2,1)$",11,15,escape=FALSE)%>%
+  pack_rows("Scenario STIR-6 b",16,20,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-1 a $(T, p, H, d) = (3,8,3,2)$",21,26,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-1 b",27,32,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 a $(T, p, H, d) = (3,8,3,2)$",33,38,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 b",39,44,escape=FALSE)
+```
+
+
+```{r LSIR kron}
+tab_bin <- tab_bin_sd <- matrix(c(0),8,4)
+# lsir 1
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_0.50_3_time_e_ind_tpts_FALSE_delta_y_FALSE_kron.rds")
+add <- 0
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,16,17),1]
+add <- -1
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,16,17),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,16,17),2]
+tab_bin[4+add,1:2] <- sim1$y_cor_mean[c(6:7),1]
+tab_bin_sd[4+add,1:2] <- sim1$y_cor_sd[c(6:7),1]
+tab_bin[5+add,1:2] <- sim1$y_cor_mean[c(11:12),1]
+tab_bin_sd[5+add,1:2] <- sim1$y_cor_sd[c(11:12),1]
+
+
+# lsir 2
+sim1 <- readRDS("../results/simulation_contLSIR_100_500_11_3_8_3_2_0.80_0.50_3_time_r_ind_tpts_TRUE_delta_y_FALSE_kron.rds")
+add <- 4
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,16,17),1]
+add <- 3
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,16,17),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,16,17),2]
+tab_bin[4+add,1:2] <- sim1$y_cor_mean[c(6:7),1]
+tab_bin_sd[4+add,1:2] <- sim1$y_cor_sd[c(6:7),1]
+tab_bin[5+add,1:2] <- sim1$y_cor_mean[c(11:12),1]
+tab_bin_sd[5+add,1:2] <- sim1$y_cor_sd[c(11:12),1]
+
+
+
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),8,4)
+colnames(pred1) <- c("STIR","STIR","LSIR", "Unscaled" )
+rownames(pred1) <- c(#rep(c("k=1","same w. gam","k=1 w.2.ord.","same w. n=2000","k=2"),2),
+                     #rep(c("k=1","same w. gam","k=1 w.2.ord.","same w. n=2000","k=2"),2),
+                     rep(c("k=1","k=1 w.2.ord.","k=2","k=3"),2))
+pred1[c(3:4,7:8),3:4] <- ""
+kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:Y_cont_lsir_kron}Correlation between $100$ new continuous $Y$-observations and values predicted by linear model fit. Results are means over $100$ replications for each setting. Settings LSIR 1 and 2 with Kronecker error covariance.") %>%
+  kable_styling(latex_options = "hold_position")%>%
+  #add_header_above(c(" " = 1, "Proposed" = 2, "Prop. w. Kron." = 2,"LSIR" = 2, "Unreduced" = 2)) %>%
+  pack_rows("Scenario LSIR-1  $(T, p, H, d) = (3,8,3,2)$",1,4,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 $(T, p, H, d) = (3,8,3,2)$",5,8,escape=FALSE)
+```
+
+## Estimation accuracy
+
+```{r tabBminBhat}
+tab_BminBhat <- tab_BminBhat_sd <- matrix(c(0),16,6)
+
+### Sc 1
+add2 <- 0
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n-2)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 8
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 9
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 12
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 13
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n-6)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+### Sc 2
+add2 <- 1
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n-1)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 8
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 9
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 12
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 13
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n+1)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+### Sc 3
+add2 <- 2
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 3
+# p <- 15
+# H <- 3
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+53)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 8
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 9
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 12
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 13
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+#str(sim1)
+# n <- 10000
+# t <- 3
+# p <- 15
+# H <- 3
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+44)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+
+### Scen 4
+add2 <- 3
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n-1)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 8
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 9
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 12
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 13
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+14)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+### Scen 5
+add2 <- 4
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 2
+# p <- 21
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+49)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 8
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 9
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 12
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 13
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 2
+# p <- 21
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n+35)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+
+### Scen 6
+add2 <- 5
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+12)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 8
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 9
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 12
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+add1 <- 13
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+14)-sim1$delta,'F')
+
+tab_BminBhat[1+add1,1+add2] <- sim1$BminBhat
+tab_BminBhat_sd[1+add1,1+add2] <- sim1$BminBhat_sd
+tab_BminBhat[3+add1,1+add2] <- sim1$BminBhat_ML
+tab_BminBhat_sd[3+add1,1+add2] <- sim1$BminBhat_ML_sd
+
+res_est_acc <- matrix(paste(round(tab_BminBhat,3)," (",round(tab_BminBhat_sd,3),")",sep=""),16,6)
+colnames(res_est_acc) <- paste("STIR",1:6,sep="-")
+rownames(res_est_acc) <- paste(rep(rep(c("OLS","ML"),each=2),4),rep(c("(a)","(b)"),8),sep=" ")
+kable(res_est_acc,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption ="\\label{tab:sim_Y_cont_BminBhat}Estimation accuracy $\\| \\B - \\hat \\B\\|_F$ for continuous $Y$, $y_i \\sim N(0,0.1), i=1,\\ldots,n$. Results are means over $500$ replications.") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  pack_rows("$n=200$",1,4,escape=FALSE)%>%
+  pack_rows("$n=500$",5,8,escape=FALSE)%>%
+  pack_rows("$n=2000$",9,12,escape=FALSE)%>%
+  pack_rows("$n=10000$",13,16,escape=FALSE)
+```
+
+```{r tabprinc_ang}
+tab_princ_ang <- tab_princ_ang_sd <- matrix(c(0),8,6)
+
+### Sc 1
+add2 <- 0
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n-2)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 2
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 3
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 6
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 7
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n-6)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+### Sc 2
+add2 <- 1
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+#str(sim1)
+
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n-1)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 2
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 3
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 6
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 7
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_5_10_3_2_2_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 10
+# p <- 3
+# H <- 2
+# d <- 2
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n+1)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+### Sc 3
+add2 <- 2
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 3
+# p <- 15
+# H <- 3
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+53)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 2
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 3
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 6
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 7
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_22_3_15_3_1_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 3
+# p <- 15
+# H <- 3
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+44)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+
+### Scen 4
+add2 <- 3
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n-1)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 2
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 3
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 6
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 7
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+14)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+### Scen 5
+add2 <- 4
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 2
+# p <- 21
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+49)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 2
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 3
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 6
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 7
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_21_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 2
+# p <- 21
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*p)/(n+35)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+
+### Scen 6
+add2 <- 5
+add1 <- 0
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 1
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_200_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 200
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+12)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 2
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 3
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_500_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 4
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 5
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_2000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 6
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+add1 <- 7
+sim1 <- readRDS("../results/Final_est_meas_contSTIR_500_10000_28_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+# str(sim1)
+# n <- 10000
+# t <- 2
+# p <- 7
+# H <- 2
+# d <- 1
+# norm(sim1$delta_ls_mean[[1]]*(n-min(d,t)*H*d)/(n+14)-sim1$delta,'F')
+
+tab_princ_ang[1+add1,1+add2] <- sim1$princ_ang
+tab_princ_ang_sd[1+add1,1+add2] <- sim1$princ_ang_sd
+
+
+res_est_acc <- matrix(formatC(tab_princ_ang, format = "e", digits = 3),8,6)
+colnames(res_est_acc) <- paste("STIR",1:6,sep="-")
+rownames(res_est_acc) <- paste(rep(rep(c("OLS"),each=2),4),rep(c("(a)","(b)"),4),sep=" ")
+kable(res_est_acc,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption ="\\label{tab:sim_Y_cont_princ_ang}$1-\\cos(\\theta)$ for continuous $Y$, $y_i \\sim N(0,0.1), i=1,\\ldots,n$. Results are means over $500$ replications.") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  pack_rows("$n=200$",1,2,escape=FALSE)%>%
+  pack_rows("$n=500$",3,4,escape=FALSE)%>%
+  pack_rows("$n=2000$",5,6,escape=FALSE)%>%
+  pack_rows("$n=10000$",7,8,escape=FALSE)
+```
+
+
+```{r unb_fig,fig.align='center',fig.height=5,fig.width=8,fig.cap="\\label{fig:unbiased_cont}Caption."}
+opar <- par(mfrow=c(2,2),mar=c(4,2,2,1))
+
+sim1 <- readRDS("../results/Delta_est_meas_contSTIR_2000_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+
+del <- del_ML <- bhat <- bhat_ML <- numeric(4)
+xaxis <- 2*10^(0:3)
+for (i in 1:4) {
+  B_mean <- apply(sim1$B_est$STIR[1:xaxis[i],,],2:3,mean)
+  B_ML_mean <- apply(sim1$B_ML_est$STIR[1:xaxis[i],,],2:3,mean)
+  Del_mean <- apply(sim1$delta_ls_est$STIR[1:xaxis[i],,],2:3,mean)
+  
+  del[i] <- norm(Del_mean - sim1$delta,'F')
+  del_ML[i] <- norm(Del_mean*(sim1$n - sim1$p*min(sim1$d,sim1$t)*sim1$H)/(sim1$n) - sim1$delta,'F')
+  bhat[i] <- norm(B_mean - sim1$B,'F')
+  bhat_ML[i] <- norm(B_ML_mean - sim1$B,'F')
+}
+# norm(Del_mean*(sim1$n - sim1$p*min(sim1$d,sim1$t)*sim1$H)/(sim1$n-2) - sim1$delta,'F')
+
+plot(xaxis,bhat,xlab=expression(n[rep]),log = 'x',type="b",col="cornflowerblue",ylim=c(0,1.4))
+lines(xaxis,bhat_ML,pch=2,lty=2,col="cornflowerblue",type="b")
+title("Coefficient Estimation in Sc. STIR-1, Cont. Y",line=0.5,font.main=1)
+legend("topright",c(expression(paste(hat(B)," OLS")),expression(paste(hat(B)," ML"))),col=c("cornflowerblue","cornflowerblue"),lty=1:2,pch=1:2)
+
+plot(xaxis,del,xlab=expression(n[rep]),log = 'x',type="b",col="chartreuse4",ylim=c(0,1.2))
+lines(xaxis,del_ML,type="b",pch=2,lty=2,col="chartreuse4")
+title("Covariance Estimation in Sc. STIR-1, Cont. Y",line=0.5,font.main=1)
+legend("topright",c(expression(paste(hat(Delta)," OLS")),expression(paste(hat(Delta)," ML"))),col=c("chartreuse4","chartreuse4"),lty=1:2,pch=1:2)
+
+sim1 <- readRDS("../results/Delta_est_meas_contSTIR_2000_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+
+del <- del_ML <- bhat <- bhat_ML <- numeric(4)
+for (i in 1:4) {
+  B_mean <- apply(sim1$B_est$STIR[1:xaxis[i],,],2:3,mean)
+  B_ML_mean <- apply(sim1$B_ML_est$STIR[1:xaxis[i],,],2:3,mean)
+  Del_mean <- apply(sim1$delta_ls_est$STIR[1:xaxis[i],,],2:3,mean)
+  
+  del[i] <- norm(Del_mean - sim1$delta,'F')
+  del_ML[i] <- norm(Del_mean*(sim1$n - sim1$p*min(sim1$d,sim1$t)*sim1$H)/(sim1$n) - sim1$delta,'F')
+  bhat[i] <- norm(B_mean - sim1$B,'F')
+  bhat_ML[i] <- norm(B_ML_mean - sim1$B,'F')
+}
+# norm(Del_mean*(sim1$n - sim1$p*min(sim1$d,sim1$t)*sim1$H)/(sim1$n-1) - sim1$delta,'F')
+
+plot(xaxis,bhat,xlab=expression(n[rep]),log = 'x',type="b",col="cornflowerblue",ylim=c(0,0.35))
+lines(xaxis,bhat_ML,pch=2,lty=2,col="cornflowerblue",type="b")
+title("Coefficient Estimation in Sc. STIR-4, Cont. Y",line=0.5,font.main=1)
+legend("topright",c(expression(paste(hat(B)," OLS")),expression(paste(hat(B)," ML"))),col=c("cornflowerblue","cornflowerblue"),lty=1:2,pch=1:2)
+
+plot(xaxis,del,xlab=expression(n[rep]),log = 'x',type="b",col="chartreuse4",ylim=c(0,0.65))
+lines(xaxis,del_ML,type="b",pch=2,lty=2,col="chartreuse4")
+title("Covariance Estimation in Sc. STIR-4, Cont. Y",line=0.5,font.main=1)
+legend("topright",c(expression(paste(hat(Delta)," OLS")),expression(paste(hat(Delta)," ML"))),col=c("chartreuse4","chartreuse4"),lty=1:2,pch=1:2)
+par(opar)
+```
