@@ -182,7 +182,7 @@ tab_bin[3+add,1:3] <- sim1$yAUC_mean[c(6:7,19),1]
 tab_bin_sd[3+add,1:3] <- sim1$yAUC_sd[c(6:7,19),1]
 tab_bin[4+add,1:3] <- sim1$yAUC_mean[c(11:12,20),1]
 tab_bin_sd[4+add,1:3] <- sim1$yAUC_sd[c(11:12,20),1]
-sim1 <- readRDS("../results/simulation_binarySTIR_100_2000_1_10_3_1_4_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+sim1 <- readRDS("../results/simulation_binarySTIR_100_2000_1_10_3_1_4_0.80_1_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
 tab_bin[2+add,] <- sim1$yAUC_mean[c(1,2,8,6,7),2]
 tab_bin_sd[2+add,] <- sim1$yAUC_sd[c(1,2,8,6,7),2]
 
@@ -197,7 +197,7 @@ tab_bin[3+add,1:3] <- sim1$yAUC_mean[c(6:7,19),1]
 tab_bin_sd[3+add,1:3] <- sim1$yAUC_sd[c(6:7,19),1]
 tab_bin[4+add,1:3] <- sim1$yAUC_mean[c(11:12,20),1]
 tab_bin_sd[4+add,1:3] <- sim1$yAUC_sd[c(11:12,20),1]
-sim1 <- readRDS("../results/simulation_binarySTIR_100_2000_1_10_3_1_4_0.80_1_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+sim1 <- readRDS("../results/simulation_binarySTIR_100_2000_1_10_3_1_4_0.80_1_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
 tab_bin[2+add,] <- sim1$yAUC_mean[c(1,2,8,6,7),2]
 tab_bin_sd[2+add,] <- sim1$yAUC_sd[c(1,2,8,6,7),2]
 
@@ -1467,3 +1467,65 @@ kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{
   pack_rows("Scenario STIR-6 b",13,16,escape=FALSE)
 ```
 
+```{r tdist}
+tab_bin <- tab_bin_sd <- matrix(c(0),14,4)
+
+sim1 <- readRDS("../results/simulation_binarySTIR_100_500_1_10_3_1_4_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE_t3dist_err.rds")
+add <- 0
+tab_bin[1+add,] <- sim1$yAUC_mean[c(1:2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$yAUC_sd[c(1:2,16,17),1]
+tab_bin[2+add,] <- sim1$yAUC_mean[c(1:2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$yAUC_sd[c(1:2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$yAUC_mean[c(6,7),1]
+tab_bin_sd[3+add,1:2] <- sim1$yAUC_sd[c(6,7),1]
+tab_bin[4+add,1:2] <- sim1$yAUC_mean[c(11,12),1]
+tab_bin_sd[4+add,1:2] <- sim1$yAUC_sd[c(11,12),1]
+
+sim1 <- readRDS("../results/simulation_binarySTIR_100_500_1_10_3_1_4_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE_t3dist_err.rds")
+add <- 4
+tab_bin[1+add,] <- sim1$yAUC_mean[c(1:2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$yAUC_sd[c(1:2,16,17),1]
+tab_bin[2+add,] <- sim1$yAUC_mean[c(1:2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$yAUC_sd[c(1:2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$yAUC_mean[c(6,7),1]
+tab_bin_sd[3+add,1:2] <- sim1$yAUC_sd[c(6,7),1]
+tab_bin[4+add,1:2] <- sim1$yAUC_mean[c(11,12),1]
+tab_bin_sd[4+add,1:2] <- sim1$yAUC_sd[c(11,12),1]
+
+sim1 <- readRDS("../results/simulation_binarySTIR_100_500_5_3_7_1_2_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE_t3dist_err.rds")
+add <- 8
+tab_bin[1+add,] <- sim1$yAUC_mean[c(1:2,11,12),1]
+tab_bin_sd[1+add,] <- sim1$yAUC_sd[c(1:2,11,12),1]
+tab_bin[2+add,] <- sim1$yAUC_mean[c(1:2,11,12),2]
+tab_bin_sd[2+add,] <- sim1$yAUC_sd[c(1:2,11,12),2]
+tab_bin[3+add,1:2] <- sim1$yAUC_mean[c(6,7),1]
+tab_bin_sd[3+add,1:2] <- sim1$yAUC_sd[c(6,7),1]
+
+sim1 <- readRDS("../results/simulation_binarySTIR_100_500_5_3_7_1_2_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE_t3dist_err.rds")
+add <- 11
+tab_bin[1+add,] <- sim1$yAUC_mean[c(1:2,11,12),1]
+tab_bin_sd[1+add,] <- sim1$yAUC_sd[c(1:2,11,12),1]
+tab_bin[2+add,] <- sim1$yAUC_mean[c(1:2,11,12),2]
+tab_bin_sd[2+add,] <- sim1$yAUC_sd[c(1:2,11,12),2]
+tab_bin[3+add,1:2] <- sim1$yAUC_mean[c(6,7),1]
+tab_bin_sd[3+add,1:2] <- sim1$yAUC_sd[c(6,7),1]
+
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),14,4)
+colnames(pred1) <- c("STIR","STIR","LSIR", "Logistic Reg" )
+rownames(pred1) <- c(rep(c("k=1","k=1, 2.ord.terms","k=2","k=3"),2),rep(c("k=1","k=1, 2.ord.terms","k=2"),2))
+pred1[c(3:4,7:8,11,14),3:4] <- ""
+kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:sim_Y_bin_tdist}AUC values for $100$ new binary $Y$-observations and values predicted by logit model fit for t-distributed errors. Results are means over $100$ replications for each setting. Settings STIR 1 and 4.") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  pack_rows("Scenario STIR-1 a $(T, p, d) = (10,3,4)$",1,4,escape=FALSE)%>%
+  pack_rows("Scenario STIR-1 b",5,8,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 a $(T, p, d) = (3,7,2)$",9,11,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 b",12,14,escape=FALSE)
+```
+
+used mvrt from mvtnorm - package with 3 degrees of freedom
+
+t dist effects: 
+STIR 1: general drop of around 0.04 in AUC, in a with 2.order terms drop of 0.11 for STIR and LogReg, 0.09 for LSIR
+STIR 4: LSIR drops by around 0.05, LogReg by also 0.05 (for 2.order terms 0.15 in a 0.08 in b), 
+        SITR drops by 0.15 (k=1), 0.08 (k=1 2nd order terms), 0.05 (k=2) in (a) and by 0.11 (k=1) or 0.08 (k=2) in (b)
