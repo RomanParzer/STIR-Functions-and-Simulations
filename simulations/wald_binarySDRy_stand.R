@@ -60,9 +60,9 @@ generateDataSTIR <- function(n,B,t,p,rho,H=1L,d=1L,what_time = "1:t/t", basis_S 
       mu <- kronecker(S_t,matrix(Gy[i,],nrow = 1))%*%B
     }
     if (y[i]==0) {
-      return(mvrnorm(1, c(mu), delta1))
+      return(mvrnorm(1, c(mu), 0.1*diag(1,t*p) ))
     } else {
-      return(mvrnorm(1, c(mu), delta2))
+      return(mvrnorm(1, c(mu), diag(1,t*p)))
     }
     # for uncor diag(1,t*p) instead of delta
     

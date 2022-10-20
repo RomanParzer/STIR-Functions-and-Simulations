@@ -62,9 +62,9 @@ generateDataSTIR <- function(n,B,t,p,rho,H=1L,d=1L,what_time = "1:t/t", basis_S 
       mu <- kronecker(S_t,matrix(Gy[i,],nrow = 1))%*%B
     }
     if (y[i]==0) {
-      return(mvrnorm(1, c(mu), delta1))
+      return(mvrnorm(1, c(mu), 0.1*diag(1,t*p)))
     } else {
-      return(mvrnorm(1, c(mu), delta2))
+      return(mvrnorm(1, c(mu), diag(1,t*p)))
     }
     # for uncor diag(1,t*p) instead of delta
     
@@ -168,14 +168,18 @@ myB5 <- matrix(c(1,  0,1/2,  0,1/2,  0,1,
                  0,1/4,1/2,1/4,1/2,1/4,0),2,7,byrow = TRUE)
 #                       n,         B, t, p, H, d, rho1, rho2,               time, cvec,cvec2, delta_y
 #              --------------------------------------------------------
-params <- list( #list( 500,0.1*myB12,10, 3, 1, 4,  0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, TRUE),
+params <- list(#list( 500,0.1*myB12,10, 3, 1, 4,  0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, TRUE),
   #list( 2000,0.1*myB12,10, 3, 1, 4,   0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, TRUE),
-  list( 500, 0.1*myB12,10, 3, 1, 4,    0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, FALSE),
-  list( 2000, 0.1*myB12,10, 3, 1, 4,  0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, FALSE),
+  list( 5000,0.1*myB12,10, 3, 1, 4,   0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, TRUE),
+  #list( 500, 0.1*myB12,10, 3, 1, 4,    0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, FALSE),
+  #list( 2000, 0.1*myB12,10, 3, 1, 4,  0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, FALSE),
+  list( 5000, 0.1*myB12,10, 3, 1, 4,  0.8, "exp(1:t/6)/exp(t/6)", 0:5/(10/3),0:5, FALSE),
   # list( 500,       myB5,3, 7, 1, 2,   0.8,             "1:t/t", 0:5/5,0:5/(5/2), TRUE),
   # list( 2000,       myB5,3, 7, 1, 2,    0.8,             "1:t/t", 0:5/5,0:5/(5/2), TRUE),
-  list( 500,       myB5,3, 7, 1, 2,    0.8,              "1:t/t", 0:5/5,0:5/(5/2), FALSE),
-  list( 2000,       myB5,3, 7, 1, 2,   0.8,              "1:t/t", 0:5/5,0:5/(5/2), FALSE)
+  list( 5000,       myB5,3, 7, 1, 2,    0.8,             "1:t/t", 0:5/5,0:5/(5/2), TRUE),
+  # list( 500,       myB5,3, 7, 1, 2,    0.8,              "1:t/t", 0:5/5,0:5/(5/2), FALSE),
+  # list( 2000,       myB5,3, 7, 1, 2,   0.8,              "1:t/t", 0:5/5,0:5/(5/2), FALSE)
+  list( 5000,       myB5,3, 7, 1, 2,   0.8,              "1:t/t", 0:5/5,0:5/(5/2), FALSE)
 )
 
 ## do 1 and 5
