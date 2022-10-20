@@ -1,4 +1,7 @@
+#' by Daniel Kapla, TU Wien
+#' 
 #' Multi-Value assigne operator.
+#'
 #'
 #' @param lhs vector of variables (or variable names) to assign values.
 #' @param rhs object that can be coersed to list of the same length as

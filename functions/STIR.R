@@ -14,7 +14,8 @@
 #'  X_red: reduced predictors, array of dim \eqn{t k \times n} with each row representing one vectorized \eqn{t \times k} observation
 #'  
 STIR <- function(X, y, t, p, d=1, H = 1, cont_y = FALSE, k = NULL, time_pts = 1:t/t, basis_S = c("Polynomial","Fourier"),
-                 center_S = TRUE,calc_VC_vecB=FALSE, calc_covX=FALSE, comp_Xred = FALSE,comp_B_ML=FALSE) {
+                 center_S = TRUE,calc_VC_vecB=FALSE, calc_covX=FALSE, comp_Xred = FALSE,comp_B_ML=FALSE,
+                 basis_Y = c("Fourier","Polynomial")) {
   # Check and transform parameters
   if (!is.array(X)) X <- as.array(X)
   
@@ -30,6 +31,7 @@ STIR <- function(X, y, t, p, d=1, H = 1, cont_y = FALSE, k = NULL, time_pts = 1:
   }
   
   basis_type <- match.arg(basis_S)
+  basis_Y <- match.arg(basis_Y)
   if (basis_type == "Fourier") {
     if (d>1) {
       S_t <- do.call(cbind, lapply(1:(d%/%2), function(s, z) {
@@ -50,12 +52,18 @@ STIR <- function(X, y, t, p, d=1, H = 1, cont_y = FALSE, k = NULL, time_pts = 1:
     if (!is.factor(y)) y <- factor(y)
     Gy <- model.matrix(~y)[,-1]
   } else {
-    Gy <- do.call(cbind, lapply(1:(H%/%2), function(s, z) {
-      cbind(cos(s * z), sin(s * z))
-    }, z = 2 * pi * y))
-    if (H%%2 == 1) {
-      Gy <- cbind(Gy,cos((H%/%2+1)*2*pi*y))
+    
+    if (basis_Y == "Fourier") {
+      Gy <- do.call(cbind, lapply(1:(H%/%2), function(s, z) {
+        cbind(cos(s * z), sin(s * z))
+      }, z = 2 * pi * y))
+      if (H%%2 == 1) {
+        Gy <- cbind(Gy,cos((H%/%2+1)*2*pi*y))
+      }
+    } else {
+      Gy <- do.call(cbind, lapply(1:H, function(s) y^s))
     }
+    
   }
   Gy <- scale(Gy,scale=FALSE)
   
