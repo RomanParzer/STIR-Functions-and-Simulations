@@ -1,11 +1,13 @@
 # STIR-Functions-and-Simulations
-Code used to perform simulations of STIR model for my Master Thesis and the STIR Paper
+README for R Code STIR Simulations
 
 There are 4 folders:
+- functions 
 - simulations
 - results
 - Rmkd
-- functions (includes R source code for used own functions, e.g. STIR(), LSIR())
+
+The 'functions' folder includes R source code for used own functions, e.g. STIR(), LSIR().
 
 In 'simulations' there are the R scripts performing the simulations and saving it
 (into 'results' folder) in a .rds object containing all relevant results.
@@ -17,4 +19,6 @@ Each of these files has the following structure:
 - for each parameter setting perform simulation and save results
 These files should be run from this folder (set the PATH).
 
-In 'Rmkd' there are .rmd files reading in the results (.rds files) and creating the Tables.
+The folder 'results' contains the saved simulation results in .rds format. The folder includes one example, all other ones can be generated from the simulation files or downloaded in the .zip-file in releases.
+
+In 'Rmkd' there are .rmd files reading in the results (.rds files) and creating the Tables and Figures.
