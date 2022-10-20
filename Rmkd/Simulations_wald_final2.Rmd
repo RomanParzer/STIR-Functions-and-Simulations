@@ -1,0 +1,505 @@
+---
+title: "Summary of Simulations"
+subtitle: "for Sufficient Dimension Reduction for Longitudinal Data"
+author: "Roman Parzer - 01604879"
+date: "`r format(Sys.time(), '%d.%m.%Y')`"
+output: 
+  pdf_document:
+    keep_tex: true
+header-includes:
+  - \usepackage{multirow}
+  - \newcommand{\N}{\mathbb{N}}
+  - \newcommand{\real}{\mathbb{R}}
+  - \newcommand{\Sb}{{\mathbf S}}
+  - \newcommand{\E}{\mathbb{E}}
+  - \newcommand{\I}{\mathbb{I}}
+  - \renewcommand{\P}{\mathbb{P}}
+  - \newcommand{\Y}{{\mathbf Y}}
+  - \newcommand{\G}{{\mathbf G}}
+  - \newcommand{\Gbb}{\mathbb{G}}
+  - \usepackage{float}
+  - \usepackage{graphics}
+#  - \usepackage{xcolor}
+  - \floatplacement{figure}{ht}
+  - \DeclareMathOperator{\Cov}{Cov}  
+  - \DeclareMathOperator{\Var}{Var} 
+  - \DeclareMathOperator{\argmax}{argmax} 
+  - \DeclareMathOperator{\argmin}{argmin} 
+  - \usepackage{booktabs}
+  - \newcommand{\B}{{\mathbf B}}
+  - \newcommand{\rank}{\operatorname{rank}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(comment = NA)
+require(knitr) # for kable
+require(kableExtra)
+require(dplyr)
+options(knitr.kable.NA = '')
+```
+
+
+```{r wrMat}
+write_matex <- function(B,B_sd=NULL,digits=3) {
+  B <- as.matrix(B)
+  begin <- "\\begin{pmatrix}"
+  end <- "\\end{pmatrix}"
+  if (is.null(B_sd)) {
+    X <-
+    apply(round(B,digits), 1, function(x) {
+      paste(
+        paste(x, collapse = "&"),
+        "\\\\"
+      )
+    })
+  } else {
+    B_sd <- as.matrix(B_sd)
+    X <-
+    apply(matrix(paste(paste(round(B,digits),round(B_sd,digits),sep="("),")",sep=""),nrow(B),ncol(B)),
+          1, function(x) {
+      paste(
+        paste(x, collapse = "&"),
+        "\\\\"
+      )
+    })
+  }
+  paste(c(begin, X, end), collapse = "")
+}
+
+
+type1tab <- matrix(NA,6,4)
+colnames(type1tab) <- rep(c("(a)","(b)"),2) # first stir then logit
+rownames(type1tab) <- rep(c("n=500","n=2000","n=5000"),2) # first stir 1 then stir 4
+
+type1tab_cont1M <- type1tab1M  <- type1tab_cont <- type1tab 
+
+```
+
+
+```{r power_plot_uncor_bin,fig.align='center',fig.height=4.2,fig.width=8,fig.cap="\\label{fig:wald_test_uncor}Rejection rates over $500$ replications of Wald test testing significance of one marker for scenarios with $n=500$ and $n=2000$ for $\\Delta=I$."}
+lm_and_logit <- TRUE
+opar <- par(mfrow=c(2,2),mar=c(4,4,2,0.5))
+
+#sim <- readRDS("../results/wald_binarySDR_500_500_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50_maxc21.50.rds")
+sim <- readRDS("../results/wald_binarySDR_500_500_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50_uncor.rds")
+type1tab1M[1,1] <- sim$rej_rates$STIR[1]
+type1tab1M[1,3] <- sim$rej_rates$logit[1]
+# str(sim)
+plot(sim$cvec,sim$rej_rates$STIR,type="b",ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="",pch=1)
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_binarySDR_500_500_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50_maxc21.50.rds")
+sim <- readRDS("../results/wald_binarySDR_500_500_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50_uncor.rds")
+type1tab1M[1,2] <- sim$rej_rates$STIR[1]
+type1tab1M[1,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",lty=2,col="chartreuse4",pch=1)
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-1, Bin. Y, 1st Marker, n=500",line=0.5,font.main=1,cex.main=1)
+
+#sim <- readRDS("../results/wald_binarySDR_500_500_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_0.50_maxc20.50.rds")
+sim <- readRDS("../results/wald_binarySDR_500_500_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_1.00_uncor.rds")
+type1tab1M[4,1] <- sim$rej_rates$STIR[1]
+type1tab1M[4,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_binarySDR_500_500_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.50_maxc20.50.rds")
+#sim <- readRDS("../results/wald_binarySDR_500_500_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.50_center.rds")
+sim <- readRDS("../results/wald_binarySDR_500_500_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_1.00_uncor.rds")
+type1tab1M[4,2] <- sim$rej_rates$STIR[1]
+type1tab1M[4,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-4, Bin. Y, 1st Marker, n=500",line=0.5,font.main=1,cex.main=1)
+
+#sim <- readRDS("../results/wald_binarySDR_500_2000_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50_maxc21.50.rds")
+sim <- readRDS("../results/wald_binarySDR_500_2000_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50_uncor.rds")
+type1tab1M[2,1] <- sim$rej_rates$STIR[1]
+type1tab1M[2,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_binarySDR_500_2000_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50_maxc21.50.rds")
+sim <- readRDS("../results/wald_binarySDR_500_2000_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50_uncor.rds")
+type1tab1M[2,2] <- sim$rej_rates$STIR[1]
+type1tab1M[2,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-1, Bin. Y, 1st Marker, n=2000",line=0.5,font.main=1,cex.main=1)
+
+#sim <- readRDS("../results/wald_binarySDR_500_2000_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_0.50_maxc20.50.rds")
+sim <- readRDS("../results/wald_binarySDR_500_2000_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_1.00_uncor.rds")
+type1tab1M[5,1] <- sim$rej_rates$STIR[1]
+type1tab1M[5,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_binarySDR_500_2000_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.50_maxc20.50.rds")
+#sim <- readRDS("../results/wald_binarySDR_500_2000_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.50_center.rds")
+sim <- readRDS("../results/wald_binarySDR_500_2000_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_1.00_uncor.rds")
+type1tab1M[5,2] <- sim$rej_rates$STIR[1]
+type1tab1M[5,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+#abline(h=0.05,col=2,lty=2)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-4, Bin. Y, 1st Marker, n=2000",line=0.5,font.main=1,cex.main=1)
+
+par(opar)
+
+sim <- readRDS("../results/wald_binarySDR_500_5000_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50_uncor.rds")
+type1tab1M[3,1] <- sim$rej_rates$STIR[1]
+type1tab1M[3,3] <- sim$rej_rates$logit[1]
+sim <- readRDS("../results/wald_binarySDR_500_5000_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50_uncor.rds")
+type1tab1M[3,2] <- sim$rej_rates$STIR[1]
+type1tab1M[3,4] <- sim$rej_rates$logit[1]
+sim <- readRDS("../results/wald_binarySDR_500_5000_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_1.00_uncor.rds")
+type1tab1M[6,1] <- sim$rej_rates$STIR[1]
+type1tab1M[6,3] <- sim$rej_rates$logit[1]
+sim <- readRDS("../results/wald_binarySDR_500_5000_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_1.00_uncor.rds")
+type1tab1M[6,2] <- sim$rej_rates$STIR[1]
+type1tab1M[6,4] <- sim$rej_rates$logit[1]
+```
+
+```{r power_plot_uncor_cont,fig.align='center',fig.height=4.2,fig.width=8,fig.cap="\\label{fig:wald_test_uncor}Rejection rates over $500$ replications of Wald test testing significance of one marker for scenarios with $n=500$ and $n=2000$ for $\\Delta=I$."}
+lm_and_logit <- TRUE
+opar <- par(mfrow=c(2,2),mar=c(4,4,2,0.5))
+
+#sim <- readRDS("../results/wald_contSDR_500_500_5_10_3_2_2_0.80_time_e_delta_y_TRUE_maxc_2.50_maxc2_2.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_500_5_10_3_2_2_0.80_time_e_delta_y_TRUE_maxc_2.50_3rdMarker_uncor.rds")
+type1tab_cont1M[1,1] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[1,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_contSDR_500_500_5_10_3_2_2_0.80_time_e_delta_y_FALSE_maxc_2.50_maxc2_2.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_500_5_10_3_2_2_0.80_time_e_delta_y_FALSE_maxc_2.50_3rdMarker_uncor.rds")
+type1tab_cont1M[1,2] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[1,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+#abline(h=0.05,col=2,lty=2)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-1, Cont. Y, 3rd Marker, n=500",line=0.5,font.main=1,cex.main=1)
+
+
+#sim <- readRDS("../results/wald_contSDR_500_500_10_2_7_2_1_0.80_time_1_delta_y_TRUE_maxc_0.50_maxc2_0.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_500_10_2_7_2_1_0.80_time_1_delta_y_TRUE_maxc_1.00_3rdMarker_uncor.rds")
+type1tab_cont1M[4,1] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[4,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_contSDR_500_500_10_2_7_2_1_0.80_time_1_delta_y_FALSE_maxc_0.50_maxc2_0.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_500_10_2_7_2_1_0.80_time_1_delta_y_FALSE_maxc_1.00_3rdMarker_uncor.rds")
+type1tab_cont1M[4,2] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[4,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-4, Cont. Y, 3rd Marker, n=500",line=0.5,font.main=1,cex.main=1)
+
+#sim <- readRDS("../results/wald_contSDR_500_2000_5_10_3_2_2_0.80_time_e_delta_y_TRUE_maxc_2.50_maxc2_2.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_2000_5_10_3_2_2_0.80_time_e_delta_y_TRUE_maxc_2.50_3rdMarker_uncor.rds")
+type1tab_cont1M[2,1] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[2,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+
+#sim <- readRDS("../results/wald_contSDR_500_2000_5_10_3_2_2_0.80_time_e_delta_y_FALSE_maxc_2.50_maxc2_2.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_2000_5_10_3_2_2_0.80_time_e_delta_y_FALSE_maxc_2.50_3rdMarker_uncor.rds")
+type1tab_cont1M[2,2] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[2,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-1, Cont. Y, 3rd Marker, n=2000",line=0.5,font.main=1,cex.main=1)
+
+
+#sim <- readRDS("../results/wald_contSDR_500_2000_10_2_7_2_1_0.80_time_1_delta_y_TRUE_maxc_0.50_maxc2_0.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_2000_10_2_7_2_1_0.80_time_1_delta_y_TRUE_maxc_1.00_3rdMarker_uncor.rds")
+type1tab_cont1M[5,1] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[5,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+#sim <- readRDS("../results/wald_contSDR_500_2000_10_2_7_2_1_0.80_time_1_delta_y_FALSE_maxc_0.50_maxc2_0.50_3rdMarker.rds")
+sim <- readRDS("../results/wald_contSDR_500_2000_10_2_7_2_1_0.80_time_1_delta_y_FALSE_maxc_1.00_3rdMarker_uncor.rds")
+type1tab_cont1M[5,2] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[5,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+#abline(h=0.05,col=2,lty=2)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-4, Cont. Y, 3rd Marker, n=2000",line=0.5,font.main=1,cex.main=1)
+
+par(opar)
+
+sim <- readRDS("../results/wald_contSDR_500_5000_5_10_3_2_2_0.80_time_e_delta_y_TRUE_maxc_2.50_3rdMarker_uncor.rds")
+type1tab_cont1M[3,1] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[3,3] <- sim$rej_rates$lm[1]
+sim <- readRDS("../results/wald_contSDR_500_5000_5_10_3_2_2_0.80_time_e_delta_y_FALSE_maxc_2.50_3rdMarker_uncor.rds")
+type1tab_cont1M[3,2] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[3,4] <- sim$rej_rates$lm[1]
+sim <- readRDS("../results/wald_contSDR_500_5000_10_2_7_2_1_0.80_time_1_delta_y_TRUE_maxc_1.00_3rdMarker_uncor.rds")
+type1tab_cont1M[6,1] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[6,3] <- sim$rej_rates$lm[1]
+sim <- readRDS("../results/wald_contSDR_500_5000_10_2_7_2_1_0.80_time_1_delta_y_FALSE_maxc_1.00_3rdMarker_uncor.rds")
+type1tab_cont1M[6,2] <- sim$rej_rates$STIR[1]
+type1tab_cont1M[6,4] <- sim$rej_rates$lm[1]
+```
+
+
+```{r power_plot_NULL_bin,fig.align='center',fig.height=4.2,fig.width=8,fig.cap="\\label{fig:wald_test_NULL}Rejection rates over $500$ replications of Wald test testing significance of all markers for scenarios with $n=500$ and $n=2000$."}
+lm_and_logit <- TRUE
+
+
+opar <- par(mfrow=c(2,2),mar=c(4,4,2,0.5))
+
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_500_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50.rds")
+# str(sim)
+type1tab[1,1] <- sim$rej_rates$STIR[1]
+type1tab[1,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_500_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50.rds")
+type1tab[1,2] <- sim$rej_rates$STIR[1]
+type1tab[1,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-1, Bin. Y, n=500",line=0.5,font.main=1,cex.main=1)
+
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_500_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_0.25.rds")
+type1tab[4,1] <- sim$rej_rates$STIR[1]
+type1tab[4,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_500_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.25.rds")
+type1tab[4,2] <- sim$rej_rates$STIR[1]
+type1tab[4,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-4, Bin. Y, n=500",line=0.5,font.main=1,cex.main=1)
+
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_2000_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50.rds")
+type1tab[2,1] <- sim$rej_rates$STIR[1]
+type1tab[2,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_2000_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50.rds")
+type1tab[2,2] <- sim$rej_rates$STIR[1]
+type1tab[2,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-1, Bin. Y, n=2000",line=0.5,font.main=1,cex.main=1)
+
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_2000_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_0.25.rds")
+type1tab[5,1] <- sim$rej_rates$STIR[1]
+type1tab[5,3] <- sim$rej_rates$logit[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="chartreuse4",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_2000_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.25.rds")
+type1tab[5,2] <- sim$rej_rates$STIR[1]
+type1tab[5,4] <- sim$rej_rates$logit[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="chartreuse4")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$logit,type="b",pch=2,lty=2,col=1)
+#abline(h=0.05,col=2,lty=2)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Logit (a)","Logit (b)"),col=c("chartreuse4","chartreuse4",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("chartreuse4","chartreuse4"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Table 1, STIR-4, Bin. Y, n=2000",line=0.5,font.main=1,cex.main=1)
+
+par(opar)
+
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_5000_1_10_3_1_4_0.80_time_e_delta_y_TRUE_maxc_1.50.rds")
+type1tab[3,1] <- sim$rej_rates$STIR[1]
+type1tab[3,3] <- sim$rej_rates$logit[1]
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_5000_1_10_3_1_4_0.80_time_e_delta_y_FALSE_maxc_1.50.rds")
+type1tab[3,2] <- sim$rej_rates$STIR[1]
+type1tab[3,4] <- sim$rej_rates$logit[1]
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_5000_5_3_7_1_2_0.80_time_1_delta_y_TRUE_maxc_0.25.rds")
+type1tab[6,1] <- sim$rej_rates$STIR[1]
+type1tab[6,3] <- sim$rej_rates$logit[1]
+sim <- readRDS("../results/wald_binarySDR_NULL2_500_5000_5_3_7_1_2_0.80_time_1_delta_y_FALSE_maxc_0.25.rds")
+type1tab[6,2] <- sim$rej_rates$STIR[1]
+type1tab[6,4] <- sim$rej_rates$logit[1]
+
+```
+
+
+```{r power_plot_NULL_cont,fig.align='center',fig.height=4.2,fig.width=8,fig.cap="\\label{fig:wald_test_NULL}Rejection rates over $500$ replications of Wald test testing significance of all markers for scenarios with $n=500$ and $n=2000$."}
+lm_and_logit <- TRUE
+opar <- par(mfrow=c(2,2),mar=c(4,4,2,0.5))
+
+sim <- readRDS("../results/wald_contSDR_NULL_500_500_5_10_3_2_2_0.80_time_e_delta_y_TRUE_3rdMarker_maxc_0.50.rds")
+type1tab_cont[1,1] <- sim$rej_rates$STIR[1]
+type1tab_cont[1,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_contSDR_NULL_500_500_5_10_3_2_2_0.80_time_e_delta_y_FALSE_3rdMarker_maxc_0.50.rds")
+type1tab_cont[1,2] <- sim$rej_rates$STIR[1]
+type1tab_cont[1,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+#abline(h=0.05,col=2,lty=2)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-1, Cont. Y, n=500",line=0.5,font.main=1,cex.main=1)
+
+
+sim <- readRDS("../results/wald_contSDR_NULL_500_500_10_2_7_2_1_0.80_time_1_delta_y_TRUE_3rdMarker_maxc_0.33.rds")
+type1tab_cont[4,1] <- sim$rej_rates$STIR[1]
+type1tab_cont[4,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_contSDR_NULL_500_500_10_2_7_2_1_0.80_time_1_delta_y_FALSE_3rdMarker_maxc_0.33.rds")
+type1tab_cont[4,2] <- sim$rej_rates$STIR[1]
+type1tab_cont[4,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-4, Cont. Y, n=500",line=0.5,font.main=1,cex.main=1)
+
+sim <- readRDS("../results/wald_contSDR_NULL_500_2000_5_10_3_2_2_0.80_time_e_delta_y_TRUE_3rdMarker_maxc_0.50.rds")
+type1tab_cont[2,1] <- sim$rej_rates$STIR[1]
+type1tab_cont[2,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+
+sim <- readRDS("../results/wald_contSDR_NULL_500_2000_5_10_3_2_2_0.80_time_e_delta_y_FALSE_3rdMarker_maxc_0.50.rds")
+type1tab_cont[2,2] <- sim$rej_rates$STIR[1]
+type1tab_cont[2,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-1, Cont. Y, n=2000",line=0.5,font.main=1,cex.main=1)
+
+
+sim <- readRDS("../results/wald_contSDR_NULL_500_2000_10_2_7_2_1_0.80_time_1_delta_y_TRUE_3rdMarker_maxc_0.33.rds")
+type1tab_cont[5,1] <- sim$rej_rates$STIR[1]
+type1tab_cont[5,3] <- sim$rej_rates$lm[1]
+plot(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,ylim=c(0,1),ylab="Rate of rejections",xlab="Scaling factor c",lty=1,col="cornflowerblue",main="")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=1,col=1)
+sim <- readRDS("../results/wald_contSDR_NULL_500_2000_10_2_7_2_1_0.80_time_1_delta_y_FALSE_3rdMarker_maxc_0.33.rds")
+type1tab_cont[5,2] <- sim$rej_rates$STIR[1]
+type1tab_cont[5,4] <- sim$rej_rates$lm[1]
+lines(sim$cvec,sim$rej_rates$STIR,type="b",pch=1,lty=2,col="cornflowerblue")
+if (lm_and_logit) lines(sim$cvec,sim$rej_rates$lm,type="b",pch=2,lty=2,col=1)
+#abline(h=0.05,col=2,lty=2)
+if (lm_and_logit) {
+  legend("bottomright",c("STIR (a)","STIR (b)","Linear F (a)","Linear F (b)"),col=c("cornflowerblue","cornflowerblue",1,1),lty=c(1,2,1,2),inset=c(0.02,0.04),cex = 0.8,pch=c(1,1,2,2))
+} else {
+  legend("bottomright",c("(a)","(b)"),col=c("cornflowerblue","cornflowerblue"),lty=c(1,2),inset=c(0.02,0.04),cex = 0.8)
+}
+title("Scenario STIR-4, Cont. Y, n=2000",line=0.5,font.main=1,cex.main=1)
+
+par(opar)
+
+sim <- readRDS("../results/wald_contSDR_NULL_500_5000_5_10_3_2_2_0.80_time_e_delta_y_TRUE_3rdMarker_maxc_0.50.rds")
+type1tab_cont[3,1] <- sim$rej_rates$STIR[1]
+type1tab_cont[3,3] <- sim$rej_rates$lm[1]
+sim <- readRDS("../results/wald_contSDR_NULL_500_5000_5_10_3_2_2_0.80_time_e_delta_y_FALSE_3rdMarker_maxc_0.50.rds")
+type1tab_cont[3,2] <- sim$rej_rates$STIR[1]
+type1tab_cont[3,4] <- sim$rej_rates$lm[1]
+sim <- readRDS("../results/wald_contSDR_NULL_500_5000_10_2_7_2_1_0.80_time_1_delta_y_TRUE_3rdMarker_maxc_0.33.rds")
+type1tab_cont[6,1] <- sim$rej_rates$STIR[1]
+type1tab_cont[6,3] <- sim$rej_rates$lm[1]
+sim <- readRDS("../results/wald_contSDR_NULL_500_5000_10_2_7_2_1_0.80_time_1_delta_y_FALSE_3rdMarker_maxc_0.33.rds")
+type1tab_cont[6,2] <- sim$rej_rates$STIR[1]
+type1tab_cont[6,4] <- sim$rej_rates$lm[1]
+```
+
+```{r kableTYPEI, include=FALSE}
+require(kableExtra)
+
+mydimN <- dimnames(type1tab)
+mycaps <- c("Type I Errors of Wald Test testing significance of all markers simultaneously in Binary Response Setting.",
+            "Type I Errors of Wald Test testing significance of all markers simultaneously in Continuous Response Setting.",
+            "Type I Errors of Wald Test testing significance of one marker when Delta=ITp in Binary Response Setting.",
+            "Type I Errors of Wald Test testing significance of one marker when Delta=ITp in Continuous Response Setting.")
+
+sapply(1:4, function(j) {
+  mytab <- list(type1tab,type1tab_cont,type1tab1M,type1tab_cont1M)[[j]]
+  tmp <- matrix(paste0(mytab," (",round(sqrt(type1tab*(1-type1tab)/500),3),")"),6,4)
+  dimnames(tmp) <- mydimN
+  if (j%%2 == 0) {
+    mykab <- kable(tmp, booktabs = TRUE, format = "latex",caption = mycaps[j]) %>%
+              pack_rows(index = c("Scenario STIR-1" = 3, "Scenario STIR-4"=3)) %>%
+              add_header_above(header = c(' '=1, STIR = 2, LM = 2))
+  } else {
+    mykab <- kable(tmp, booktabs = TRUE, format = "latex",caption = mycaps[j]) %>%
+              pack_rows(index = c("Scenario STIR-1" = 3, "Scenario STIR-4"=3)) %>%
+              add_header_above(header = c(' '=1, STIR = 2, Logit = 2))
+  }
+  
+  message(print(mykab))
+})
+
+# cont tables need linear instead of logit
+
+# lapply(list(type1tab,type1tab_cont), function(mytab) {
+#   tmp <- matrix(paste0(mytab," (",round(sqrt(type1tab*(1-type1tab)/500),3),")"),4,4)
+#   dimnames(tmp) <- mydimN
+#   mykab <- kable(tmp, booktabs = TRUE, format = "latex") %>%
+#   pack_rows(index = c("Scenario STIR-1" = 2, "Scenario STIR-4"=2)) %>%
+#   add_header_above(header = c(' '=1, STIR = 2, Logit = 2))
+#   message(print(mykab))
+# })
+```

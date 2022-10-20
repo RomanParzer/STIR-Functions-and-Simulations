@@ -1,0 +1,318 @@
+---
+title: "Summary of Simulations"
+subtitle: "for Sufficient Dimension Reduction for Longitudinal Data"
+author: "Roman Parzer - 01604879"
+date: "`r format(Sys.time(), '%d.%m.%Y')`"
+output: 
+  pdf_document:
+    keep_tex: true
+header-includes:
+  - \usepackage{multirow}
+  - \usepackage{natbib}
+  - \usepackage{verbatim}
+  - \newcommand{\N}{\mathbb{N}}
+  - \newcommand{\real}{\mathbb{R}}
+  - \newcommand{\Sb}{{\mathbf S}}
+  - \newcommand{\E}{\mathbb{E}}
+  - \newcommand{\I}{\mathbb{I}}
+  - \renewcommand{\P}{\mathbb{P}}
+  - \newcommand{\Y}{{\mathbf Y}}
+  - \newcommand{\G}{{\mathbf G}}
+  - \newcommand{\greekbold}[1]{\mbox{\boldmath $#1$}}
+  - \newcommand{\Sigmabf}{\greekbold{\Sigma}}
+  - \newcommand{\Deltabf}{\greekbold{\Delta}}
+  - \newcommand{\Gbb}{\mathbb{G}}
+  - \usepackage{float}
+  - \usepackage{graphics}
+#  - \usepackage{xcolor}
+  - \floatplacement{figure}{ht}
+  - \DeclareMathOperator{\Cov}{Cov}  
+  - \DeclareMathOperator{\Var}{Var} 
+  - \DeclareMathOperator{\argmax}{argmax} 
+  - \DeclareMathOperator{\argmin}{argmin} 
+  - \usepackage{booktabs}
+  - \newcommand{\B}{{\mathbf B}}
+  - \newcommand{\rank}{\operatorname{rank}}
+  - \newcommand{\spn}{\operatorname{span}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(comment = NA)
+require(knitr) # for kable
+require(kableExtra)
+require(dplyr)
+options(knitr.kable.NA = '')
+```
+
+```{r res_1234}
+## now binary settings 1 - 4
+## STIR delta ml, STIR kron, STIR ML, LSIR, orig
+
+tab_bin <- tab_bin_sd <- matrix(c(0),30,4)
+rankTabBin <- matrix(c(0),14,3)
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_1_10_3_1_4_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[1,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- 0
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_1_10_3_1_4_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[2,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <-  add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_1_10_3_1_4_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[3,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <-  add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_1_10_3_1_4_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[3+1,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <-  add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_2_4_15_1_3_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[4+1,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <-  add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_2_4_15_1_3_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[5+1,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <-  add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_5_3_7_1_2_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[6+1,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16-5,17-5),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16-5,17-5),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16-5,17-5),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16-5,17-5),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_5_3_7_1_2_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[7+1,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add + 3
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16-5,17-5),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16-5,17-5),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16-5,17-5),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16-5,17-5),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),30,4)
+colnames(pred1) <- c("STIR","STIR Kron","LSIR", "Logistic Reg" )
+rownames(pred1) <- c(rep(c("k=1","k=1, 2.ord.terms","k=2","k=3"),6),
+                     rep(c("k=1","k=1, 2.ord.terms","k=2"),2))
+pred1[c(4-1,5-1,9-2,10-2,14-3,15-3,19-4,20-4,24-5,25-5,29-6,30-6,34-7,38-8),4:5-1] <- ""
+mykab <- kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:BIC_Y_bin_1234}BIC values in logit model fits. Results are means over $100$ replications for each setting. Settings STIR 1-4.",format = "latex") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  pack_rows("Scenario STIR-1 a $(T, p, d) = (10,3,4)$",1,4,escape=FALSE)%>%
+  pack_rows("Scenario STIR-1 b",5,8,escape=FALSE)%>%
+  pack_rows("Scenario STIR-2 a $(T, p, d) = (10,3,4)$",9,12,escape=FALSE)%>%
+  pack_rows("Scenario STIR-2 b",13,16,escape=FALSE)%>%
+  pack_rows("Scenario STIR-3 a $(T, p, d) = (4,15,3)$",17,20,escape=FALSE)%>%
+  pack_rows("Scenario STIR-3 b",21,24,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 a $(T, p, d) = (3,7,2)$",25,27,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 b",28,30,escape=FALSE)
+
+print(mykab)
+```
+
+```{r res_5678}
+## now binary settings 5 - 8
+tab_bin <- tab_bin_sd <- matrix(c(0),22,4)
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_14_3_21_1_2_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[9,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- 0
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16-5,17-5),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16-5,17-5),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16-5,17-5),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16-5,17-5),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+
+
+sim1 <- readRDS("../results/rank_binarySTIR_100_500_14_3_21_1_2_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[10,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add +3
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16-5,17-5),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16-5,17-5),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16-5,17-5),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16-5,17-5),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+
+# LSIR 1
+sim1 <- readRDS("../results/rank_binaryLSIR_100_500_6_8_3_1_4_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[11,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add + 3
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+
+sim1 <- readRDS("../results/rank_binaryLSIR_100_500_6_8_3_1_4_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[12,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binaryLSIR_100_500_6_8_3_1_4_0.80_3_time_r_ind_tpts_TRUE_delta_y_TRUE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[13,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+sim1 <- readRDS("../results/rank_binaryLSIR_100_500_6_8_3_1_4_0.80_3_time_r_ind_tpts_TRUE_delta_y_FALSE.rds")
+tmp <- table(c(sim1$rkTest[1,],0,1,2,3)) 
+if (tmp[1] > 1) {warning("estimated rank of zero appeared")}
+rankTabBin[14,] <-  c(tmp[2:3],sum(tmp[-(1:3)]))-1
+add <- add + 4
+tab_bin[1+add,] <- sim1$BICmean[c(1,2,16,17),1]
+tab_bin_sd[1+add,] <- sim1$BICsd[c(1,2,16,17),1]
+tab_bin[2+add,] <- sim1$BICmean[c(1,2,16,17),2]
+tab_bin_sd[2+add,] <- sim1$BICsd[c(1,2,16,17),2]
+tab_bin[3+add,1:2] <- sim1$BICmean[c(6:7),1]
+tab_bin_sd[3+add,1:2] <- sim1$BICsd[c(6:7),1]
+tab_bin[4+add,1:2] <- sim1$BICmean[c(11:12),1]
+tab_bin_sd[4+add,1:2] <- sim1$BICsd[c(11:12),1]
+
+
+
+pred1 <- matrix(paste(round(tab_bin,3)," (",round(tab_bin_sd,3),")",sep=""),22,4)
+colnames(pred1) <- c("STIR","STIR","LSIR", "Unreduced")
+rownames(pred1) <- c(rep(c("k=1","k=1, 2.ord.terms","k=2"),2),
+                     rep(c("k=1","k=1, 2.ord.terms","k=2","k=3"),4))
+pred1[c(3,6,9:10,13:14,17:18,21:22),4:5-1] <- ""
+mykab <- kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{tab:BIC_Y_bin_5678}BIC scores in logit model fits. Results are means over $100$ replications for each setting. Settings STIR 5, 6 and LSIR 1, 2.",format = "latex") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  pack_rows("Scenario STIR-5 a $(T, p, d) = (3,21,2)$",1,3,escape=FALSE)%>%
+  pack_rows("Scenario STIR-5 b",4,6,escape=FALSE)%>%
+  # pack_rows("Scenario STIR-6 a $(T, p, d) = (3,7,2)$",9,12,escape=FALSE)%>%
+  # pack_rows("Scenario STIR-6 b",13,16,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-1 a $(T, p, d) = (8,3,4)$",7,10,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-1 b",11,14,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 a $(T, p, d) = (8,3,4)$",15,18,escape=FALSE)%>%
+  pack_rows("Scenario LSIR-2 b",19,22,escape=FALSE)
+
+print(mykab)
+
+
+rankTabCont <- readRDS("rankTabCont.rds")
+
+rankTab <- cbind(rankTabBin,rankTabCont)
+
+rownames(rankTab) <- c("STIR-1 a",
+                       "STIR-1 b",
+                       "STIR-2 a",
+                       "STIR-2 b",
+                       "STIR-3 a",
+                       "STIR-3 b",
+                       "STIR-4 a",
+                       "STIR-4 b",
+                       "STIR-5 a",
+                       "STIR-5 b",
+                       "LSIR-1 a",
+                       "LSIR-1 b",
+                       "LSIR-2 a",
+                       "LSIR-2 b"
+                       )
+colnames(rankTab) <- rep(c("1","2",">=3"),2)
+
+RankKab <- kable(rankTab,vline="",booktabs=TRUE,escape = FALSE,caption = "\\label{tab:EstRank}Frequencies of estimated ranks of Bhat over $100$ replications for each simulation setting.",format = "latex") %>%
+              add_header_above(header = c(' '=1,Binary = 3, Continuous = 3))
+
+print(RankKab)
+```
+
+ 

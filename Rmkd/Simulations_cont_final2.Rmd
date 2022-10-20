@@ -1835,7 +1835,7 @@ add <- add + 1
 tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,11,14),2]
 tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,11,14),2]
 tab_bin[2+add,1:3] <- sim1$y_cor_mean[c(6:7,12),1]
-tab_bin_sd[2+add,1:3] <- sim1$y_cor_sd[c(6:7,12),1]
+tab_bin_sd[2+add,1:3] <- sim1$y_cor_sd[c(6:7,12),1] 
 tab_bin[3+add,3] <- sim1$y_cor_mean[c(13),1]
 tab_bin_sd[3+add,3] <- sim1$y_cor_sd[c(13),1]
 
@@ -1854,6 +1854,132 @@ kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,caption = "\\label{
   pack_rows("Scenario STIR-4 b",15,18,escape=FALSE)
 ```
 
+
+
 effects of t3-distributed errors on correlations:
 STIR 1: STIR drops by around 0.12 (0.14 for k=1, over 0.2 for 2.ord.terms), LSIR by 0.15, LinReg by 0.12
 STIR 4: STIR drops by around 0.13 (0.18 for k=2), LSIR by around 0.17, LinReg by 0.18 (over 0.3 for 2.ord.terms)
+
+
+```{r res sens y base}
+
+## STIR delta ml, STIR kron, STIR ML, LSIR, orig
+# gam and n=2000 for k=1, 
+### now cont settings 1- 4
+tab_bin <- tab_bin_sd <- matrix(c(0),14,5)
+
+#Sc1
+add <- 0
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE.rds")
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+add <- add - 1
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 4
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),1]
+add <- add - 1
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,21,16,20),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,21,16,20),2]
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,22,17),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,22,17),1]
+tab_bin[5+add,1:4] <- sim1$y_cor_mean[c(11:12,23,18),1]
+tab_bin_sd[5+add,1:4] <- sim1$y_cor_sd[c(11:12,23,18),1]
+
+## sc 4
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE.rds")
+add <- 8
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+add <- add - 1
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+
+
+
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE.rds")
+add <- 11
+tab_bin[1+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),1]
+tab_bin_sd[1+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),1]
+add <- add - 1
+tab_bin[3+add,] <- sim1$y_cor_mean[c(1:2,15,11,14),2]
+tab_bin_sd[3+add,] <- sim1$y_cor_sd[c(1:2,15,11,14),2]
+tab_bin[4+add,1:4] <- sim1$y_cor_mean[c(6:7,16,12),1]
+tab_bin_sd[4+add,1:4] <- sim1$y_cor_sd[c(6:7,16,12),1]
+
+
+tab_bin2 <- tab_bin_sd2 <- matrix(c(0),14,4)
+
+add <- 0
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_TRUE_Sens_Ybase.rds")
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,16,20),1]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,16,20),1]
+add <- add + 1
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,16,20),2]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,16,20),2]
+tab_bin2[2+add,1:3] <- sim1$y_cor_mean[c(6:7,17),1]
+tab_bin_sd2[2+add,1:3] <- sim1$y_cor_sd[c(6:7,17),1]
+tab_bin2[3+add,1:3] <- sim1$y_cor_mean[c(11:12,18),1]
+tab_bin_sd2[3+add,1:3] <- sim1$y_cor_sd[c(11:12,18),1]
+
+add <- 4
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_5_10_3_2_2_0.80_3_time_e_ind_tpts_FALSE_delta_y_FALSE_Sens_Ybase.rds")
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,16,20),1]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,16,20),1]
+add <- add + 1
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,16,20),2]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,16,20),2]
+tab_bin2[2+add,1:3] <- sim1$y_cor_mean[c(6:7,17),1]
+tab_bin_sd2[2+add,1:3] <- sim1$y_cor_sd[c(6:7,17),1]
+tab_bin2[3+add,1:3] <- sim1$y_cor_mean[c(11:12,18),1]
+tab_bin_sd2[3+add,1:3] <- sim1$y_cor_sd[c(11:12,18),1]
+
+add <- 8
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_TRUE_Sens_Ybase.rds")
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,11,14),1]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,11,14),1]
+add <- add + 1
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,11,14),2]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,11,14),2]
+tab_bin2[2+add,1:3] <- sim1$y_cor_mean[c(6:7,12),1]
+tab_bin_sd2[2+add,1:3] <- sim1$y_cor_sd[c(6:7,12),1]
+
+add <- 11
+sim1 <- readRDS("../results/simulation_contSTIR_100_500_10_2_7_2_1_0.80_2_time_1_ind_tpts_FALSE_delta_y_FALSE_Sens_Ybase.rds")
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,11,14),1]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,11,14),1]
+add <- add + 1
+tab_bin2[1+add,] <- sim1$y_cor_mean[c(1:2,11,14),2]
+tab_bin_sd2[1+add,] <- sim1$y_cor_sd[c(1:2,11,14),2]
+tab_bin2[2+add,1:3] <- sim1$y_cor_mean[c(6:7,12),1]
+tab_bin_sd2[2+add,1:3] <- sim1$y_cor_sd[c(6:7,12),1] 
+
+
+tab_bin3 <- cbind(tab_bin[,1],tab_bin2[,c(1)],tab_bin[,5])
+tab_bin_sd3 <- cbind(tab_bin_sd[,1],tab_bin_sd2[,c(1)],tab_bin_sd[,5])
+
+pred1 <- matrix(paste(round(tab_bin3,3)," (",round(tab_bin_sd3,3),")",sep=""),14,3)
+colnames(pred1) <- c("STIR","STIR poly.-base", "Linear Reg" )
+rownames(pred1) <- c(rep(c("k=1","same w.2.ord.terms","k=2","k=3"),2),rep(c("k=1","same w.2.ord.terms","k=2"),2))
+
+pred1[c(3:4,7:8,11,14),3] <- ""
+
+reskab <- kable(pred1,vline="",booktabs=TRUE,digits = 3,escape = FALSE,format="latex",caption = "\\label{tab:sim_Y_cont_Ybase_Sens}Correlations for $100$ new binary $Y$-observations and values predicted by linear model fit and by STIR-model using Polynomial basis for $G(y)$. Results are means over $100$ replications for each setting. Settings STIR 1 and 4.") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  pack_rows("Scenario STIR-1 a $(T, p, H, d) = (10,3,2,2)$",1,4,escape=FALSE)%>%
+  pack_rows("Scenario STIR-1 b",5,8,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 a $(T, p, H, d) = (2,7,2,1)$",9,11,escape=FALSE)%>%
+  pack_rows("Scenario STIR-4 b",12,14,escape=FALSE)
+# print(reskab)
+```
+
